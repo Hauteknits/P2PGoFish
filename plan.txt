@@ -1,0 +1,7 @@
+41000-41499
+
+ports ending in 9 are reserved for manager
+
+ports ending in 0-2 are M ports
+ports ending in 3-5 are R ports
+ports ending in 6-8 are P ports
