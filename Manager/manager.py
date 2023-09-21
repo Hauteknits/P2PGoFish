@@ -10,11 +10,11 @@ class Player:
 		self.mPort = mPort
 		self.rPort = rPort
 		self.pPort = pPort
-class Game:
-	def __init__(self):
-		self.games = []
-	def addPlayer(player): #work in progress
-		self.
+#class Game:
+#	def __init__(self):
+#		self.games = []
+#	def addPlayer(player): #work in progress
+#		self.
 
 playerDB = []
 port = 41009
@@ -26,10 +26,14 @@ print("listening")
 s.bind(("",port))
 while 1:
 	data, addr = s.recvfrom(1024)
-	print(addr)
+	print("INFO: Incoming connection from",addr,":",data,sep=" ")
 	data = data.decode('utf-8')
 	x = data.split(" ")
 	x[-1] = x[-1].rstrip()
+	clientM = int(x.pop(0))
+	clientR = int(x.pop(0))
+	clientP = int(x.pop(0))
+	rep = ""
 	match x[0]:
 		case "register":
 			found = False
@@ -43,28 +47,32 @@ while 1:
 
 			np = Player(x[1],x[2],x[3],x[4],x[5])
 			playerDB.append(np)
-			print("registered",x[1],"at",x[2],"with ports",x[3],x[4],x[5], sep=" ")
-
+			rep = "registered " + x[1] + " at " + x[2] + " with ports " +x[3] +" "+x[4] +" "+ x[5]
+			print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
+			ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
 		case "query":
 			match x[1]:
 				case "players":
 					if len(playerDB) == 0:
-						print("there are no registered users")
+						rep = "there are no registered users"
 					else:
 						for player in playerDB:
-							print(player.player,player.ip,player.mPort,player.rPort,player.pPort,sep=" ")
+							rep += player.player + " " + player.ip+ " " +player.mPort+ " " +player.rPort+ " " +player.pPort + "\n"
 				case "games":
-					print("matching games!")
+					rep = "matching games!"
 				case _:
-					print("ERR: Unknown Command")
-
+					rep = "ERR: Unknown command"
+			print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
+			ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
 		case "start":
 			#print("starting game from",x[2],"with",x[3],"additional players", sep=" ")
-			print("Command not yet implemented")
+			rep = "Command not yet implemented"
 
 		case "end":
 			#print("ending game",x[1],"by",x[2],sep=" ")
 			print("Command not yet implemented")
+			print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
+			ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
 
 		case "de-register":
 			found = False
@@ -74,11 +82,15 @@ while 1:
 					found = True
 					break
 			if found:
-				print("de-registering ",x[1])
+				rep = "de-registering " + x[1]
 			else:
-				print("Unknown Player")
+				rep = "ERR: unknown user"
+			print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
+			ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
 
 		case "X": #Depreciated, used for testing with nc
 			print("reciving connection from netcat...")
 		case _:
-			print("ERR: unknown command")
+			rep = "ERR: Unknown command"
+			print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
+			ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))

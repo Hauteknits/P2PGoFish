@@ -5,3 +5,32 @@ ports ending in 9 are reserved for manager
 ports ending in 0-2 are M ports
 ports ending in 3-5 are R ports
 ports ending in 6-8 are P ports
+
+server message format:
+M-Port R-Port P-Port <message>
+turn deck 
+
+
+All transmissions are stateless, given ports and IPs don't change. Program is synchronous, single-threaded. 
+
+
+Cards:
+Deck will be represented by Base64 string: 64 chars, 52 cards, easy peasy (A-z)
+Each player's hand and table will be represented by base64 string
+
+Hand is visible only to player, table is global, deck is hidden
+
+Cards will be represented by 2 letters to indicate what card it is, will use a decode function
+C - Clubs
+S - Spades
+H - Hearts
+D - Diamonds,
+2-10 for number, J for Jack, Q for Queen, K for King, and A for ace. e.g. AS - Ace of Spades, 10C - 10 of clubs
+
+
+The whole deck will be stored with each player, using substring functions to pull off the top card
+Players will store a DB of all players in specific order, keeping track of a turn variable
+
+Turn Variable:
+will be an int, player turn will be determined using database[ turn%k ]
+
