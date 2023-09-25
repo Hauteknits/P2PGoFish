@@ -17,7 +17,7 @@ class Player:
 #		self.
 
 playerDB = []
-port = 41009
+port = 37009
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 ssend = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

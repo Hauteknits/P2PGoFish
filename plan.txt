@@ -1,4 +1,4 @@
-41000-41499
+37000-37499
 
 ports ending in 9 are reserved for manager
 
@@ -32,5 +32,7 @@ The whole deck will be stored with each player, using substring functions to pul
 Players will store a DB of all players in specific order, keeping track of a turn variable
 
 Turn Variable:
-will be an int, player turn will be determined using database[ turn%k ]
+will be an int, player turn will be determined using database [ turn%k ]
+
+Assi
 

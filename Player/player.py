@@ -7,7 +7,7 @@ if len(sys.argv) != 5:
 	print(sys.argv)
 	exit(1)
 UDP_IP = sys.argv[1]
-UDP_PORT = 41009
+UDP_PORT = 37009
 MPORT = int(sys.argv[2])
 RPORT = int(sys.argv[3])
 PPORT = int(sys.argv[4])
