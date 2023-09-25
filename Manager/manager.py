@@ -30,7 +30,7 @@ while 1:
 	data = data.decode('utf-8')
 	x = data.split(" ")
 	x[-1] = x[-1].rstrip()
-	clientM = int(x.pop(0))
+	clientM = int(x.pop(0)) #remove ports from command array
 	clientR = int(x.pop(0))
 	clientP = int(x.pop(0))
 	rep = ""
@@ -59,7 +59,7 @@ while 1:
 						for player in playerDB:
 							rep += player.player + " " + player.ip+ " " +player.mPort+ " " +player.rPort+ " " +player.pPort + "\n"
 				case "games":
-					rep = "matching games!"
+					rep = "there are no active games"
 				case _:
 					rep = "ERR: Unknown command"
 			print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
@@ -67,7 +67,8 @@ while 1:
 		case "start":
 			#print("starting game from",x[2],"with",x[3],"additional players", sep=" ")
 			rep = "Command not yet implemented"
-
+			print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
+			ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
 		case "end":
 			#print("ending game",x[1],"by",x[2],sep=" ")
 			print("Command not yet implemented")

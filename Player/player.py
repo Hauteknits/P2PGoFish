@@ -3,7 +3,7 @@
 import socket
 import sys
 if len(sys.argv) != 5:
-	print("Error: program must be launched with the following format: python player.py <m-port> <r-port> <p-port>")
+	print("Error: program must be launched with the following format: python player.py <server-ip> <m-port> <r-port> <p-port>")
 	print(sys.argv)
 	exit(1)
 UDP_IP = sys.argv[1]
