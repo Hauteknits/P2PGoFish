@@ -16,6 +16,8 @@ MPORT = int(sys.argv[2])
 RPORT = int(sys.argv[3])
 PPORT = int(sys.argv[4])
 
+players = []
+
 class Player:
 	def __init__(self, player, ip, mPort, rPort, pPort):
 		self.player = player
@@ -49,11 +51,28 @@ def cli():
 		sserv.sendto(bytes(message,'utf-8'), (UDP_IP, UDP_PORT))
 		try:
 			data, addr = rm.recvfrom(1024)
+			dataArr = data.decode('utf-8').split(" ")
+			if dataArr[0] == "startnewgame":
+				buildPlayers(sserv, rm, int(dataArr[1]))
 		except socket.timeout:
 			print("Error: Connection timeout from manager. (Hint: verify server IP?)\n")
 			exit(1)
 		data = data.decode('utf-8')
 		print(data)
+def buildPlayers(sserv, rm , count):
+	sserv.sendto(bytes("secondstartotheright",'utf-8'), (UDP_IP,UDP_PORT))
+	for x in range(count):
+		try:
+			data, addr = rm.recvfrom(1024)
+			dataArr = data.decode('utf-8').split(" ")
+			if dataArr[0] != x:
+				print("Warning: player count mismatch, manually verify")
+			tempPlayer = player(dataArr[1],dataArr[2],dataArr[3],dataArr[4],dataArr[5])
+			players.append(tempPlayer)
+		except socket.timeout:
+			print("Error: timeout from manager while recieving players. (The programmer f**ked something up)")
+			break
+	sserv.sendto(bytes("straightontillmorning", 'utf-8'), (UDP_IP, UDP_PORT))
 
 def game():
 	#setup socket
@@ -62,7 +81,6 @@ def game():
 	
 	#local variables
 	gameInfo = None
-	players = []
 
 	exit(0)
 
@@ -77,7 +95,7 @@ if __name__ == "__main__":
 	while(1)
 		tInt.start()
 		tCli.start()
-		tInt.join()
+		tInt.join() #exit code checking somewhere in here would be good
 		tCli.terminate()
 		print("You are being connected to a game, please wait while the session is setup...")
 		tGame.start()

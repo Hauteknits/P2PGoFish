@@ -66,6 +66,13 @@ while 1:
 			ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
 		case "start":
 			#print("starting game from",x[2],"with",x[3],"additional players", sep=" ")
+
+			#Basic idea, Send start game command to requesting player. Individually send each player and pass into local array
+				#Select players
+				#Send start game
+					#wait for client to jump into recPlayer SR
+				#send each player [player count, name, ip, m, r, p] sleep in between
+				#send end command to terminate player's thing
 			rep = "Command not yet implemented"
 			print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
 			ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
