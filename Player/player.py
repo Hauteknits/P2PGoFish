@@ -69,6 +69,7 @@ def buildPlayers(sserv, rm , count):
 				print("Warning: player count mismatch, manually verify")
 			tempPlayer = player(dataArr[1],dataArr[2],dataArr[3],dataArr[4],dataArr[5])
 			players.append(tempPlayer)
+			sserv.sendto(bytes("neverland", 'utf-8'), (UDP_IP, UDP_PORT))
 		except socket.timeout:
 			print("Error: timeout from manager while recieving players. (The programmer f**ked something up)")
 			break
