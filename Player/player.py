@@ -5,6 +5,8 @@ import sys
 from io import StringIO
 import time
 import multiprocessing
+import threading
+
 
 if len(sys.argv) != 5:
 	print("Error: program must be launched with the following format: python player.py <server-ip> <m-port> <r-port> <p-port>")
@@ -34,6 +36,7 @@ def waitForGame():
 	rr = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	rr.bind(("",RPORT))
 	data, addr = rr.recvfrom(1024)
+	exit(0)
 
 def cli():
 	sserv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -42,11 +45,12 @@ def cli():
 	rm.settimeout(5)
 	stdin = open(0)
 	while 1:
-		print("?: ", end='')
-		command = stdin.readline()
-		if command == "recvfromr":
-			print("UYEAYH BOYYS")
-			break
+		sys.stdout.write("?: ")
+		sys.stdout.flush()
+		try:
+			command = stdin.readline()
+		except KeyboardInterrupt:
+			exit(0)
 		message = str(MPORT) + " " + str(RPORT) + " " + str(PPORT) + " " + command
 		sserv.sendto(bytes(message,'utf-8'), (UDP_IP, UDP_PORT))
 		try:
@@ -54,26 +58,32 @@ def cli():
 			dataArr = data.decode('utf-8').split(" ")
 			if dataArr[0] == "startnewgame":
 				buildPlayers(sserv, rm, int(dataArr[1]))
+				exit(0)
 		except socket.timeout:
 			print("Error: Connection timeout from manager. (Hint: verify server IP?)\n")
 			exit(1)
 		data = data.decode('utf-8')
 		print(data)
+
 def buildPlayers(sserv, rm , count):
-	sserv.sendto(bytes("secondstartotheright",'utf-8'), (UDP_IP,UDP_PORT))
+	sserv.sendto(bytes("secondstartotheright",'utf-8'), (UDP_IP, UDP_PORT))
 	for x in range(count):
 		try:
 			data, addr = rm.recvfrom(1024)
 			dataArr = data.decode('utf-8').split(" ")
-			if dataArr[0] != x:
+			print(dataArr)
+			if int(dataArr[0]) != x:
 				print("Warning: player count mismatch, manually verify")
-			tempPlayer = player(dataArr[1],dataArr[2],dataArr[3],dataArr[4],dataArr[5])
+			tempPlayer = Player(dataArr[1],dataArr[2],dataArr[3],dataArr[4],dataArr[5])
 			players.append(tempPlayer)
 			sserv.sendto(bytes("neverland", 'utf-8'), (UDP_IP, UDP_PORT))
 		except socket.timeout:
 			print("Error: timeout from manager while recieving players. (The programmer f**ked something up)")
 			break
 	sserv.sendto(bytes("straightontillmorning", 'utf-8'), (UDP_IP, UDP_PORT))
+	print(players)
+	for x in players:
+		print("Player:",x.player,"IP:",x.ip,"PORTS:",x.mPort,x.rPort,x.pPort,sep=" ")
 
 def game():
 	#setup socket
@@ -86,18 +96,36 @@ def game():
 	exit(0)
 
 
+def cliExits(tCli, tInt):
+	tCli.join()
+	tInt.terminate()
+def intExits(tCli, tInt):
+	tInt.join()
+	tCli.terminate()
+
+
+
 # Setting up threads or processes idk which but the functionality is there
 if __name__ == "__main__":
 	tCli = multiprocessing.Process(target=cli)
 	tInt = multiprocessing.Process(target=waitForGame)
 	tGame = multiprocessing.Process(target=game)
+
+	ce = threading.Thread(target=cliExits, args=(tCli, tInt,))
+	ie = threading.Thread(target=intExits, args=(tCli, tInt,))
 	# Starts 2 processes, one of which runs the CLI and the other that waits for a connection on the R port
 	# Once a request to initiate a game is recieved, tInt terminates and will kill tCli, which will then go into the game function
-	while(1)
+	try:
 		tInt.start()
 		tCli.start()
-		tInt.join() #exit code checking somewhere in here would be good
-		tCli.terminate()
-		print("You are being connected to a game, please wait while the session is setup...")
-		tGame.start()
-		tGame.join()
+		ce.start()
+		ie.start()
+		ce.join()
+		ie.join()
+	except KeyboardInterrupt:
+		tInt.terminate()
+		print("\n--SIGINT--")
+		exit(0)
+	print("You are being connected to a game, please wait while the session is setup...")
+	#tGame.start()
+	#tGame.join()
