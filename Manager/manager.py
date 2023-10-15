@@ -42,6 +42,7 @@ try:
 		data = data.decode('utf-8')
 		x = data.split(" ")
 		x[-1] = x[-1].rstrip()
+		print(x)
 		clientM = int(x.pop(0)) #remove ports from command array
 		clientR = int(x.pop(0))
 		clientP = int(x.pop(0))
@@ -124,6 +125,8 @@ try:
 						data2 = data2.decode('utf-8')
 						if data2 != 'straightontillmorning':
 							break
+						else:
+							print("INFO: Transmission complete")
 					else:
 						continue
 				except socket.timeout:
