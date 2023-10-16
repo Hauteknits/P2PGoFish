@@ -13,14 +13,12 @@ class Player:
 		self.rPort = rPort
 		self.pPort = pPort
 class Game:
-	def __init__(self):
-		self.player = []
-		self.started = False
-		self.finished = False
-	def addPlayer(player): #work in progress
-		self.games.append(player)
+	def __init__(self, host):
+		self.host = host
+		self.players = []
 
 playerDB = []
+playerDBInGame = []
 gameDB = []
 port = 37009
 
@@ -72,7 +70,14 @@ try:
 							for player in playerDB:
 								rep += player.player + " " + player.ip+ " " +player.mPort+ " " +player.rPort+ " " +player.pPort + "\n"
 					case "games":
-						rep = "there are no active games"
+						for g in gameDB:
+							rep += "Host: "+g.Host
+							rep +="\nPlayers: "
+							for p in g.players:
+								rep += p.player + " "
+							rep += "\n"
+						if len(gameDB) == 0:
+							rep = "there are no active games"
 					case _:
 						rep = "ERR: Unknown command"
 				print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
@@ -86,21 +91,25 @@ try:
 						#wait for client to jump into recPlayer SR
 					#send each player [player count, name, ip, m, r, p] Not sleeping in between, going to ACK the responses instead
 					#send end command to terminate player's thing
-				#TODO: check if enough players
+				if x[3] > len(playerDB):
+					rep = "Error: not enough users"
+					print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
+					ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
+					continue
 				curPlayer = None
-				for rp in playerDB: #checks player DB for dupe names
-					if rp.ip == addr[0]:
+				for rp in playerDB: #finds player
+					if rp.player == x[2]:
 						curPlayer = rp
 						break
 				if curPlayer == None:
-					rep = "Error: user not registered"
+					rep = "Error: user not registered or no user provided"
 					print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
 					ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
 					continue
 				else:
 					playerDB.remove(curPlayer)
 
-				rep = "startnewgame " + x[2]
+				rep = "startnewgame " + x[3]
 				print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
 				ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
 
@@ -113,7 +122,7 @@ try:
 						random.shuffle(playerDB)
 						playerDB.insert(0, curPlayer) #by inserting curPlayer at index 0 again, ensures the user is always sent themselves first
 
-						for i in range(0,int(x[2])):
+						for i in range(0,int(x[3])):
 							rep = [str(i),playerDB[i].player , str(playerDB[i].ip) , str(playerDB[i].mPort),str(playerDB[i].rPort),str(playerDB[i].pPort)]
 							rep = " ".join(rep)
 							ssend.sendto(bytes(rep, 'utf-8'), (addr[0], clientM))
@@ -127,6 +136,13 @@ try:
 							break
 						else:
 							print("INFO: Transmission complete")
+							tGame = Game(playerDB[0])
+							playerDBInGame.append(playerDB.pop(0))
+							#removes players so they cant be added again
+							for i in range(1, int(x[3])-1):
+								tGame.players.append(playerDB[0])
+								playerDBInGame.append(playerDB.pop(0))
+							gameDB.append(tGame)
 					else:
 						continue
 				except socket.timeout:
@@ -135,8 +151,16 @@ try:
 				#TODO: start game
 
 			case "end":
-				#print("ending game",x[1],"by",x[2],sep=" ")
-				print("Command not yet implemented")
+				for g in gameDB:
+					if x[1] == g.host:
+						playerDB.append(g.host)
+						for p in g.players:
+							playerDB.append(p)
+							playerDBInGame.remove(p)
+						gameDB.remove(g)
+						break
+
+				rep = "Game Ended"
 				print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
 				ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
 
