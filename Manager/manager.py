@@ -71,7 +71,7 @@ try:
 								rep += player.player + " " + player.ip+ " " +player.mPort+ " " +player.rPort+ " " +player.pPort + "\n"
 					case "games":
 						for g in gameDB:
-							rep += "Host: "+g.Host
+							rep += "Host: "+g.host.player
 							rep +="\nPlayers: "
 							for p in g.players:
 								rep += p.player + " "
@@ -144,7 +144,7 @@ try:
 							tGame = Game(playerDB[0])
 							playerDBInGame.append(playerDB.pop(0))
 							#removes players so they cant be added again
-							for i in range(1, int(x[3])-1):
+							for i in range(1, int(x[3])):
 								tGame.players.append(playerDB[0])
 								playerDBInGame.append(playerDB.pop(0))
 							gameDB.append(tGame)
