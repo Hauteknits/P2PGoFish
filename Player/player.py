@@ -196,7 +196,19 @@ def game(q):
 		renderScreen(playerBooks, myHand)
 		#wait to recieve a message OR wait to send a message and wait
 		#if your turn
-		if turn%3 == whenTurn:
+		if turn%len(players) == whenTurn:
+			booksCount = 0
+			for b in playerBooks:
+				booksCount += len(b)
+			if booksCount == 13:
+				playerBooksOrig = deepcopy(playerBooks)
+				playerBooks.sort(key=sortKey,reverse=True)
+				winner = players[playerBooksOrig.index(playerBooks[0])]
+				print(winner.player," is the winner!!!")
+				msg = str(turn) + " " + str(deckSize) + " GAMEOVERWINNER "+winner.player
+				psend.sendto(bytes(msg,'utf-8'),(players[nextPlayer(whenTurn)].ip, int(players[nextPlayer(whenTurn)].pPort)))
+				time.sleep(5)
+				exit(0)
 
 			#check if you have a book
 			joinedHand = ''.join(myHand)
@@ -254,8 +266,8 @@ def game(q):
 						
 					except ValueError: #Is a letter
 						ltr = query[1].rstrip().upper()
-						print(ltr)
-						print(len(ltr))
+						#print(ltr)
+						#print(len(ltr))
 						match ltr:
 							case "A":
 								num = 1
@@ -308,6 +320,8 @@ def game(q):
 						data2.pop(0)
 						for c in data2:
 							myHand.append(c)
+						print("You got ",len(data2)," cards!!!")
+						time.sleep(2)
 						break
 					#Else, draw card, if get requested card, deckSize--. If not, deckSize--, turn++, if deckSize = 0, turn++
 					else:
@@ -322,13 +336,13 @@ def game(q):
 						deckSize -= 1
 						drawnCard = deck.pop(0)
 						myHand.append(drawnCard)
-						if getNum(decodeCard(drawnCard)) == query[1]:
+						if getNum(decodeCard(drawnCard)) == query[1].rstrip():
 							print("You drew what you were asking for!:",decodeCard(drawnCard),"Go again!",sep=" ")
-							time.sleep(1)
+							time.sleep(2)
 							break
 						else:
 							print("You drew",decodeCard(drawnCard),sep=" ")
-							time.sleep(1)
+							time.sleep(2)
 							turn+=1
 							msg = str(turn)+" "+str(deckSize)+" ET"
 							psend.sendto(bytes(msg,'utf-8'),(players[nextPlayer(whenTurn)].ip, int(players[nextPlayer(whenTurn)].pPort)))
@@ -344,7 +358,7 @@ def game(q):
 			data, addr = rp.recvfrom(1024)
 			data = data.decode('utf-8').split(" ")
 			time.sleep(0.1)
-			print(data)
+			#print(data)
 			#turn = <turn>
 			turn = int(data.pop(0))
 			#remove (deckSize - <deck_size>) amount of cards from deck
@@ -375,10 +389,12 @@ def game(q):
 					else:
 						msg = str(turn) + " " + str(deckSize) + " REP " + toSend
 						psend.sendto(bytes(msg,'utf-8'),(players[turn%len(players)].ip, int(players[turn%len(players)].pPort)))
+						print(players[turn%len(players)].player," took your ",getNum(decodeCard(group[0])),"'s!!!")
+						time.sleep(2)
 
 				#BOOK - Update Books
 				case "BOOK":
-					updatingPlayer = turn%3
+					updatingPlayer = turn%len(players)
 					playerBooks[updatingPlayer] += data[1]
 
 				#GAMEOVERWINNER - Process Winner
@@ -388,10 +404,10 @@ def game(q):
 					psend.sendto(bytes(msg,'utf-8'), (players[turn%len(players)].ip, int(players[turn%len(players)].pPort)))
 					#if host, send game over to manager
 					if isHost:
-						msg = str(mPort) + " "+str(rPort) + " " + str(pPort) + " end " + username
+						msg = str(MPORT) + " "+str(RPORT) + " " + str(PPORT) + " end " + username
 						psend.sendto(bytes(msg, 'utf-8'), (UDP_IP, UDP_PORT))
 					print("Game Over!",data[1],"won the game!",sep=" ")
-					input("Press any key to continue...")
+					time.sleep(5)
 					exit(0)
 
 
@@ -402,6 +418,8 @@ def cliExits(pCli, pInt):
 def intExits(pCli, pInt):
 	pInt.join()
 	pCli.terminate()
+def sortKey(e):
+	return len(e)
 def nextPlayer(whenTurn):
 	global players
 	if whenTurn == len(players)-1:
@@ -452,28 +470,29 @@ def clearScreen():
 
 # Setting up threads or processes idk which but the functionality is there
 if __name__ == "__main__":
-	clearScreen()
-	q = multiprocessing.Queue()
-	pCli = multiprocessing.Process(target=cli, args=(q,))
-	pInt = multiprocessing.Process(target=waitForGame, args=(q,))
-	pGame = multiprocessing.Process(target=game, args=(q,))
+	while 1:	
+		clearScreen()
+		q = multiprocessing.Queue()
+		pCli = multiprocessing.Process(target=cli, args=(q,))
+		pInt = multiprocessing.Process(target=waitForGame, args=(q,))
+		pGame = multiprocessing.Process(target=game, args=(q,))
 
-	ce = threading.Thread(target=cliExits, args=(pCli, pInt,))
-	ie = threading.Thread(target=intExits, args=(pCli, pInt,))
-	# Starts 2 processes, one of which runs the CLI and the other that waits for a connection on the R port
-	# Once a request to initiate a game is recieved, tInt terminates and will kill tCli, which will then go into the game function
-	try:
-		pInt.start()
-		pCli.start()
-		ce.start()
-		ie.start()
-		ce.join()
-		ie.join()
-		print("You are being connected to a game, please wait while the session is setup...")
-		pGame.start()
-		pGame.join()
-	except KeyboardInterrupt:
-		pInt.terminate()
-		print("\n--SIGINT--")
-		exit(0)
+		ce = threading.Thread(target=cliExits, args=(pCli, pInt,))
+		ie = threading.Thread(target=intExits, args=(pCli, pInt,))
+		# Starts 2 processes, one of which runs the CLI and the other that waits for a connection on the R port
+		# Once a request to initiate a game is recieved, tInt terminates and will kill tCli, which will then go into the game function
+		try:
+			pInt.start()
+			pCli.start()
+			ce.start()
+			ie.start()
+			ce.join()
+			ie.join()
+			print("You are being connected to a game, please wait while the session is setup...")
+			pGame.start()
+			pGame.join()
+		except KeyboardInterrupt:
+			pInt.terminate()
+			print("\n--SIGINT--")
+			exit(0)
 	

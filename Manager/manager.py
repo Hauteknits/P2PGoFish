@@ -91,7 +91,12 @@ try:
 						#wait for client to jump into recPlayer SR
 					#send each player [player count, name, ip, m, r, p] Not sleeping in between, going to ACK the responses instead
 					#send end command to terminate player's thing
-				if x[3] > len(playerDB):
+				if len(x) < 4:
+					rep = "Error: Format is start game <username> <players>"
+					print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
+					ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
+					continue
+				if int(x[3]) > len(playerDB):
 					rep = "Error: not enough users"
 					print("RESPONSE TO",addr[0],"ON PORT",clientM,rep,sep=" ")
 					ssend.sendto(bytes(rep,'utf-8'), (addr[0], clientM))
